@@ -13,6 +13,7 @@ local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/G
 --// Services
 local Players           = game:GetService('Players');
 local ReplicatedStorage = game:GetService('ReplicatedStorage');
+local UserInputService = game:GetService('UserInputService')
 local Workspace         = game:GetService('Workspace');
 local RunService        = game:GetService('RunService');
 
@@ -45,11 +46,19 @@ do
         Default = 'Q',
     })
 
+
     UI.Aimlock:AddColorPicker('AimlockLineColor', {
         Title = 'Line Color',
         Default = Color3.fromRGB(255, 255, 255),
         -- Transparency = 0,
         -- Callback = function(Value)end
+    })
+
+    UI.AimlockMethod = P1S1:AddDropdown('P1S1D3', {
+        Text = 'Method',
+        Values = {'Circle', 'Default (Q)'},
+        Default = 1,
+        Multi = false
     })
 
     UI.AimlockPrediction = {Value = 0.1318}--[[P1S1:AddSlider('P1S1S1', {
@@ -70,6 +79,18 @@ do
     })
 
     P1S1:AddDivider()
+
+    UI.FovRadius = P1S1:AddSlider('P1S1S1', {
+        Text = 'FOV Radius',
+        Default = 150,
+        Min = 0,
+        Max = 500,
+        Rounding = 0,
+        Compact = true
+    })
+
+    P1S1:AddDivider()
+
 
     UI.FpsBoost = P1S1:AddDropdown('P1S1D2', {
         Text = 'FPS Boost:',
@@ -111,6 +132,7 @@ Lib.ToggleKeybind = Options.LibKeybind
 ThemeManager:ApplyToGroupbox(P1S2)
 --// Functions
 
+--// Utility
 do
     Utils.ClosestPlayer = function()
         local Max = math.huge
@@ -126,6 +148,30 @@ do
                         if mag < Max then
                             Max = mag
                             Close = v
+                        end
+                    end
+                end
+            end
+        end
+        return Close
+    end
+
+    Utils.ClosestTarget = function()
+        local Max = UI.FovRadius.Value
+        local Close
+        for _, v in next, Players:GetPlayers() do
+            if v ~= Client and v.Character ~= nil then
+                local char = v.Character
+                if char:FindFirstChild(UI.AimlockTarget.Value) ~= nil and char:FindFirstChild('Humanoid') ~= nil and
+                char:FindFirstChild('Humanoid').Health > 0 then
+                    local Pos, onScreen = Workspace.CurrentCamera:WorldToViewportPoint(char[UI.AimlockTarget.Value].Position)
+                    if onScreen then
+                        local mag = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(Pos.X, Pos.Y)).Magnitude
+                        if mag < Max then
+                            Max = mag
+                            Close = v
+                            Utils.Target = v;
+                            Utils.Locking = true
                         end
                     end
                 end
@@ -177,7 +223,9 @@ end
 --// UI Options
 do
     Options.AimlockKey:OnClick(function()
-        Utils.Aimlock()
+        if UI.AimlockMethod.Value == 'Default (Q)' then
+            Utils.Aimlock()
+        end
     end)
 
     Options.ResetKey:OnClick(function()
@@ -228,27 +276,65 @@ do
 end
 --// Other Variables
 local Line = Drawing.new('Line')
+local Line2 = Drawing.new('Line')
+
+local Circle = Drawing.new('Circle')
+Circle.NumSides = 360
+Circle.Filled = false
+Circle.Color = Color3.new(1, 1, 1)
+Circle.Thickness = 2
+Circle.Transparency = 1
+
+UI.AimlockMethod:OnChanged(function()
+    if UI.AimlockMethod.Value == 'Circle' then
+        Circle.Visible = true
+    else
+        Circle.Visible = false
+    end
+end)
 --// RunService
 RunService.RenderStepped:Connect(function()
-    if Utils.Locking == true and Utils.Target ~= nil and Utils.Target.Character then
+    if UI.AimlockMethod.Value == 'Circle' then
+        Circle.Radius = UI.FovRadius.Value
+        Line2.Visible = false
+        Circle.Position = Vector2.new(Mouse.X, Mouse.Y + 35);
+        local ClosestPerson = Utils.ClosestTarget() or nil;
+        if ClosestPerson ~= nil then
+            local Vector, onScreen = WTVP(Camera, ClosestPerson.Character[UI.AimlockTarget.Value].Position + (ClosestPerson.Character[UI.AimlockTarget.Value].Velocity * UI.AimlockPrediction.Value))
+            if onScreen then
+                Line.Color          = Options.AimlockLineColor.Value
+                Line.Transparency   = 1
+                Line.Thickness      = 2.5
+                Line.From           = Vector2.new(Mouse.X, Mouse.y + 36)
+                Line.To             = Vector2.new(Vector.X, Vector.Y)
+                Line.Visible        = true
+            else
+                Line.Visible        = false
+            end
+        else
+            Line.Visible = false
+        end
+    elseif UI.AimlockMethod.Value == 'Default (Q)' and Utils.Locking == true and Utils.Target ~= nil and Utils.Target.Character then
+        Line.Visible = false
         local Person = Utils.Target or nil;
         if Person == nil then
-            Line.Visible = false
+            Line2.Visible = false
         end
         local Vector, onScreen = WTVP(Camera, Person.Character[UI.AimlockTarget.Value].Position + (Person.Character[UI.AimlockTarget.Value].Velocity * UI.AimlockPrediction.Value))
         if onScreen then
-            Line.Color        = Options.AimlockLineColor.Value
-            Line.Transparency = 1
-            Line.Thickness    = 2.5
-            Line.From         = Vector2.new(Mouse.X, Mouse.Y + 36)
-            Line.To           = Vector2.new(Vector.X, Vector.Y)
-            Line.Visible      = true
+            Line2.Color        = Options.AimlockLineColor.Value
+            Line2.Transparency = 1
+            Line2.Thickness    = 2.5
+            Line2.From         = Vector2.new(Mouse.X, Mouse.Y + 36)
+            Line2.To           = Vector2.new(Vector.X, Vector.Y)
+            Line2.Visible      = true
         else
-            Line.Visible      = false
-            Line.Color        = Options.AimlockLineColor.Value
+            Line2.Visible      = false
+            Line2.Color        = Options.AimlockLineColor.Value
         end
     else
         Line.Visible = false
+        Line2.Visible = false
     end
 end)
 --// Hookmetamethods
