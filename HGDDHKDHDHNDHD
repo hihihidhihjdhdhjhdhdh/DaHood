@@ -89,6 +89,16 @@ do
         Tooltip = 'Automatically spam stomps anyone by walking over them'
     })
 
+    UI.ResetCharacter = P1S1:AddToggle('P1S1T3', {
+        Text = 'Resets Character',
+        Default = true,
+        Tooltip = 'Resets character when button is pressed -->'
+    }):AddKeyPicker('ResetKey', {
+        Text = '',
+        Default = 'R',
+        NoUI = true,
+    })
+
     P1S1:AddDivider()
 
     P1S1:AddLabel('Toggle Keybind'):AddKeyPicker('LibKeybind', {
@@ -159,11 +169,19 @@ do
     Utils.AutoStomp = function()
         ReplicatedStorage:WaitForChild("MAINEVENT"):FireServer('STOMP')
     end
+
+    Utils.ResetCharacter = function()
+        Client.Character.Humanoid.Health = 0;
+    end
 end
 --// UI Options
 do
     Options.AimlockKey:OnClick(function()
         Utils.Aimlock()
+    end)
+
+    Options.ResetKey:OnClick(function()
+        Utils.ResetCharacter()
     end)
 
     Utils.DeleteNPC     = false;
@@ -242,7 +260,8 @@ local name;name = hookmetamethod(game, '__namecall', function(self, ...)
         if Utils.Locking == true and method == 'FireServer' and args[1] == 'MOUSE' then
             local Character = Utils.Target.Character
             args[2] = Character[UI.AimlockTarget.Value].Position +
-            Character[UI.AimlockTarget.Value].Velocity * UI.AimlockPrediction.Value
+            Character[UI.AimlockTarget.Value].Velocity * UI.AimlockPrediction.Value +
+            Character[UI.AimlockTarget.Value].Velocity / math.huge
 
             return name(self, unpack(args))
         end
