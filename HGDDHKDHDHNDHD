@@ -200,8 +200,6 @@ do
                         if mag < Max then
                             Max = mag
                             Close = v
-                            Utils.Target = v;
-                            Utils.Locking = true
                         end
                     end
                 end
@@ -334,6 +332,8 @@ RunService.RenderStepped:Connect(function()
         Circle.Position = Vector2.new(Mouse.X, Mouse.Y + 35);
         local ClosestPerson = Utils.ClosestTarget() or nil;
         if ClosestPerson ~= nil then
+            Utils.Target = ClosestPerson
+            Utils.Locking = true
             local Vector, onScreen = WTVP(Camera, ClosestPerson.Character[UI.AimlockTarget.Value].Position + (ClosestPerson.Character[UI.AimlockTarget.Value].Velocity * UI.AimlockPrediction.Value))
             if onScreen then
                 Line.Color          = Options.AimlockLineColor.Value
@@ -346,6 +346,8 @@ RunService.RenderStepped:Connect(function()
                 Line.Visible        = false
             end
         else
+            Utils.Target = nil
+            Utils.Locking = false
             Line.Visible = false
         end
     elseif UI.AimlockMethod.Value == 'Default (Q)' and Utils.Locking == true and Utils.Target ~= nil and Utils.Target.Character then
