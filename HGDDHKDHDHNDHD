@@ -80,6 +80,11 @@ do
 
     P1S1:AddDivider()
 
+    P1S1:AddLabel('FOV Color'):AddColorPicker('FovColor', {
+        Title = 'Fov Color',
+        Default = Color3.fromRGB(255, 255, 255),
+    })
+
     UI.FovRadius = P1S1:AddSlider('P1S1S1', {
         Text = 'FOV Radius',
         Default = 150,
@@ -88,6 +93,16 @@ do
         Rounding = 0,
         Compact = true
     })
+    
+    UI.FovSides = P1S1:AddSlider('P1S1S6', {
+        Text = 'FOV Sides',
+        Default = 12,
+        Min = 2,
+        Max = 80,
+        Rounding = 0,
+        Compact = true
+    })
+    
 
     P1S1:AddDivider()
 
@@ -121,6 +136,21 @@ do
     })
 
     P1S1:AddDivider()
+
+    UI.FpsCap = P1S1:AddSlider('P1S1S5', {
+        Text = 'Fps Cap',
+        Default = 144,
+        Min = 60,
+        Max = 900,
+        Rounding = 0,
+        Compact = true,
+    })
+    P1S1:AddButton('FPS Unlock', function()
+        setfpscap(UI.FpsCap.Value)
+    end)
+
+    P1S1:AddDivider()
+
 
     P1S1:AddLabel('Toggle Keybind'):AddKeyPicker('LibKeybind', {
         Text = '',
@@ -279,12 +309,16 @@ local Line = Drawing.new('Line')
 local Line2 = Drawing.new('Line')
 
 local Circle = Drawing.new('Circle')
-Circle.NumSides = 360
 Circle.Filled = false
-Circle.Color = Color3.new(1, 1, 1)
 Circle.Thickness = 2
 Circle.Transparency = 1
 
+Options.FovColor:OnChanged(function()
+    Circle.Color = Options.FovColor.Value
+end)
+UI.FovSides:OnChanged(function()
+    Circle.NumSides = UI.FovSides.Value
+end)
 UI.AimlockMethod:OnChanged(function()
     if UI.AimlockMethod.Value == 'Circle' then
         Circle.Visible = true
@@ -355,3 +389,5 @@ local name;name = hookmetamethod(game, '__namecall', function(self, ...)
 
     return name(self, ...)
 end)
+
+Lib:Notify('Hi baby <3 I miss you and I love you a lot, it will be okay I promise my love, my everything\nYou are my princess MWMWMWAAAA', 15)
